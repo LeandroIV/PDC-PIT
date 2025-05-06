@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Programming Interactive Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .visualization {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .comparison {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .comparison-column {
+            flex: 1;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 0 10px;
+        }
+        .cpu {
+            border-top: 4px solid #e74c3c;
+        }
+        .gpu {
+            border-top: 4px solid #2ecc71;
+        }
+        pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .performance-chart {
+            height: 300px;
+            margin: 20px 0;
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GPU Programming Interactive Demo</h1>
+            <p>Visualizing the power of parallel processing with GPUs</p>
+        </header>
+
+        <div class="demo-section">
+            <h2>CPU vs GPU Processing Visualization</h2>
+            <p>This demo visualizes how CPUs and GPUs process tasks differently. CPUs process tasks sequentially (one after another), while GPUs process many tasks in parallel.</p>
+            
+            <div class="controls">
+                <button id="start-demo">Start Demo</button>
+                <button id="reset-demo">Reset</button>
+            </div>
+            
+            <div class="visualization">
+                <canvas id="processing-canvas" width="800" height="400"></canvas>
+            </div>
+            
+            <div class="comparison">
+                <div class="comparison-column cpu">
+                    <h3>CPU Processing</h3>
+                    <p>CPUs have a few powerful cores that process tasks sequentially. They excel at complex, sequential tasks that cannot be easily parallelized.</p>
+                    <ul>
+                        <li>Few powerful cores (4-32 typically)</li>
+                        <li>High clock speeds</li>
+                        <li>Large cache memory</li>
+                        <li>Complex control logic</li>
+                    </ul>
+                </div>
+                <div class="comparison-column gpu">
+                    <h3>GPU Processing</h3>
+                    <p>GPUs have many simple cores that process tasks in parallel. They excel at simple, repetitive tasks that can be performed on many data elements simultaneously.</p>
+                    <ul>
+                        <li>Many simple cores (thousands)</li>
+                        <li>Optimized for parallel workloads</li>
+                        <li>High memory bandwidth</li>
+                        <li>Simpler control logic per core</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Performance Comparison</h2>
+            <p>This chart compares the performance of CPUs and GPUs across different applications. The values represent the speedup factor achieved by GPU acceleration compared to CPU-only implementation.</p>
+            
+            <div class="performance-chart">
+                <canvas id="performance-chart" width="800" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>CUDA Programming Example</h2>
+            <p>Below is a simple CUDA program for vector addition. This demonstrates how parallel operations are expressed in CUDA.</p>
+            
+            <pre><code>// CUDA Kernel for vector addition
+__global__ void vectorAdd(float *a, float *b, float *c, int n) {
+    // Calculate global thread ID
+    int id = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    // Boundary check
+    if (id < n) {
+        c[id] = a[id] + b[id];
+    }
+}
+
+int main() {
+    // Vector size
+    int n = 1000000;
+    
+    // Allocate memory, initialize vectors...
+    
+    // Define grid and block dimensions
+    int blockSize = 256;
+    int gridSize = (n + blockSize - 1) / blockSize;
+    
+    // Launch kernel with thousands of parallel threads
+    vectorAdd<<<gridSize, blockSize>>>(d_a, d_b, d_c, n);
+    
+    // Rest of the code...
+}</code></pre>
+        </div>
+
+        <footer>
+            <p>Created for GPU Programming and Hardware Acceleration Report</p>
+        </footer>
+    </div>
+
+    <script>
+        // CPU vs GPU Processing Visualization
+        const canvas = document.getElementById('processing-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Performance Chart
+        const chartCanvas = document.getElementById('performance-chart');
+        const chartCtx = chartCanvas.getContext('2d');
+        
+        // Demo controls
+        const startButton = document.getElementById('start-demo');
+        const resetButton = document.getElementById('reset-demo');
+        
+        // Demo state
+        let animationId = null;
+        let tasks = [];
+        const taskCount = 100;
+        
+        // Initialize the demo
+        function initDemo() {
+            // Clear canvas
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw divider
+            ctx.fillStyle = '#dddddd';
+            ctx.fillRect(0, canvas.height/2, canvas.width, 2);
+            
+            // Labels
+            ctx.fillStyle = '#000000';
+            ctx.font = '16px Arial';
+            ctx.fillText('CPU Processing (Sequential)', 20, 30);
+            ctx.fillText('GPU Processing (Parallel)', 20, canvas.height/2 + 30);
+            
+            // Create tasks
+            tasks = [];
+            for (let i = 0; i < taskCount; i++) {
+                tasks.push({
+                    x: 50,
+                    cpuDone: false,
+                    gpuDone: false,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`
+                });
+            }
+        }
+        
+        // Run the demo animation
+        function runDemo() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw divider
+            ctx.fillStyle = '#dddddd';
+            ctx.fillRect(0, canvas.height/2, canvas.width, 2);
+            
+            // Labels
+            ctx.fillStyle = '#000000';
+            ctx.font = '16px Arial';
+            ctx.fillText('CPU Processing (Sequential)', 20, 30);
+            ctx.fillText('GPU Processing (Parallel)', 20, canvas.height/2 + 30);
+            
+            // Process one CPU task at a time
+            let cpuTaskIndex = tasks.findIndex(task => !task.cpuDone);
+            if (cpuTaskIndex !== -1) {
+                tasks[cpuTaskIndex].x += 5;
+                if (tasks[cpuTaskIndex].x >= canvas.width - 50) {
+                    tasks[cpuTaskIndex].cpuDone = true;
+                }
+            }
+            
+            // Process all GPU tasks simultaneously
+            let allGpuDone = true;
+            for (let task of tasks) {
+                if (!task.gpuDone) {
+                    task.gpuDone = Math.random() < 0.02; // Random completion
+                    allGpuDone = false;
+                }
+            }
+            
+            // Draw tasks
+            for (let i = 0; i < tasks.length; i++) {
+                // CPU tasks
+                ctx.fillStyle = tasks[i].color;
+                if (!tasks[i].cpuDone) {
+                    if (i === cpuTaskIndex) {
+                        ctx.fillRect(tasks[i].x, 50 + i % 10 * 15, 10, 10);
+                    } else {
+                        ctx.fillRect(50, 50 + i % 10 * 15, 10, 10);
+                    }
+                } else {
+                    ctx.fillRect(canvas.width - 60, 50 + i % 10 * 15, 10, 10);
+                }
+                
+                // GPU tasks
+                if (!tasks[i].gpuDone) {
+                    ctx.fillRect(50 + Math.random() * 5, canvas.height/2 + 50 + i % 10 * 15, 10, 10);
+                } else {
+                    ctx.fillRect(canvas.width - 60, canvas.height/2 + 50 + i % 10 * 15, 10, 10);
+                }
+            }
+            
+            // Check if demo is complete
+            let cpuComplete = tasks.every(task => task.cpuDone);
+            let gpuComplete = tasks.every(task => task.gpuDone);
+            
+            if (cpuComplete && gpuComplete) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            } else {
+                animationId = requestAnimationFrame(runDemo);
+            }
+        }
+        
+        // Draw performance chart
+        function drawPerformanceChart() {
+            const applications = ['Neural Networks', 'Molecular Dynamics', 'Video Processing', 'Financial Modeling', 'Medical Imaging'];
+            const cpuPerformance = [1, 1, 1, 1, 1]; // Baseline
+            const gpuPerformance = [45, 25, 10, 35, 20]; // Speedup factors
+            
+            const chartWidth = chartCanvas.width;
+            const chartHeight = chartCanvas.height;
+            const barWidth = chartWidth / (applications.length * 3);
+            const maxValue = Math.max(...gpuPerformance) * 1.1;
+            
+            // Clear canvas
+            chartCtx.fillStyle = '#ffffff';
+            chartCtx.fillRect(0, 0, chartWidth, chartHeight);
+            
+            // Draw axes
+            chartCtx.strokeStyle = '#000000';
+            chartCtx.beginPath();
+            chartCtx.moveTo(50, 20);
+            chartCtx.lineTo(50, chartHeight - 40);
+            chartCtx.lineTo(chartWidth - 20, chartHeight - 40);
+            chartCtx.stroke();
+            
+            // Y-axis label
+            chartCtx.save();
+            chartCtx.translate(20, chartHeight / 2);
+            chartCtx.rotate(-Math.PI / 2);
+            chartCtx.textAlign = 'center';
+            chartCtx.fillStyle = '#000000';
+            chartCtx.fillText('Relative Performance', 0, 0);
+            chartCtx.restore();
+            
+            // Draw bars and labels
+            for (let i = 0; i < applications.length; i++) {
+                const x = 80 + i * (chartWidth - 100) / applications.length;
+                
+                // CPU bar
+                chartCtx.fillStyle = '#e74c3c';
+                const cpuHeight = (cpuPerformance[i] / maxValue) * (chartHeight - 60);
+                chartCtx.fillRect(x, chartHeight - 40 - cpuHeight, barWidth, cpuHeight);
+                
+                // GPU bar
+                chartCtx.fillStyle = '#2ecc71';
+                const gpuHeight = (gpuPerformance[i] / maxValue) * (chartHeight - 60);
+                chartCtx.fillRect(x + barWidth + 5, chartHeight - 40 - gpuHeight, barWidth, gpuHeight);
+                
+                // Speedup label
+                chartCtx.fillStyle = '#000000';
+                chartCtx.textAlign = 'center';
+                chartCtx.fillText(`${gpuPerformance[i]}x`, x + barWidth + 5 + barWidth/2, chartHeight - 45 - gpuHeight);
+                
+                // Application label
+                chartCtx.fillText(applications[i], x + barWidth, chartHeight - 20);
+            }
+            
+            // Legend
+            chartCtx.fillStyle = '#e74c3c';
+            chartCtx.fillRect(chartWidth - 100, 30, 15, 15);
+            chartCtx.fillStyle = '#2ecc71';
+            chartCtx.fillRect(chartWidth - 100, 55, 15, 15);
+            chartCtx.fillStyle = '#000000';
+            chartCtx.textAlign = 'left';
+            chartCtx.fillText('CPU', chartWidth - 80, 42);
+            chartCtx.fillText('GPU', chartWidth - 80, 67);
+        }
+        
+        // Initialize the demo
+        initDemo();
+        drawPerformanceChart();
+        
+        // Event listeners
+        startButton.addEventListener('click', () => {
+            if (!animationId) {
+                animationId = requestAnimationFrame(runDemo);
+            }
+        });
+        
+        resetButton.addEventListener('click', () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            initDemo();
+        });
+    </script>
+</body>
+</html>
